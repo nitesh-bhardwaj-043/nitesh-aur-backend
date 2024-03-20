@@ -7,6 +7,7 @@ import {
   deleteImageFromCloudinary,
 } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
@@ -175,8 +176,9 @@ const logoutUser = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(
     req.user._id,
     {
-      $set: {
-        refreshToken: undefined,
+      $unset: {
+        refreshToken: 1,
+        // pass the flag 1 to all the fields which you want to remove
       },
     },
     {
@@ -272,7 +274,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 const updateAccountDetails = asyncHandler(async (req, res) => {
   const { fullName, email } = req.body;
 
-  if (!(username && email)) {
+  if (!(fullName && email)) {
     throw new ApiError(400, "All fields are required");
   }
 
@@ -474,7 +476,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(
         200,
-        user[0].getWatchHistory,
+        user[0].watchHistory,
         "watch history fetched successfully"
       )
     );
