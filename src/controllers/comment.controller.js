@@ -117,7 +117,7 @@ const updateComment = asyncHandler(async (req, res) => {
 
   const getComment = await Comment.findById(commentId);
 
-  if (req.user?._id != getComment?.owner) {
+  if (req.user?._id.toString() !== getComment?.owner.toString()) {
     throw new ApiError(400, "User is not the owner of this comment");
   }
 
@@ -155,7 +155,7 @@ const deleteComment = asyncHandler(async (req, res) => {
 
   const getComment = await Comment.findById(commentId);
 
-  if (getComment?.owner != req.user?._id) {
+  if (getComment?.owner.toString() !== req.user?._id.toString()) {
     throw new ApiError(400, "User is not the owner of this comment");
   }
 
