@@ -33,15 +33,14 @@ const deleteImageFromCloudinary = async (publicUrl) => {
     cloudinary.api
       .delete_resources(publicId)
       .then((result) => {
-        console.log("Deleted!!");
         return result;
       })
       .catch((error) => {
-        console.log(`🔴☁️ Error while deleting files ${error}`);
+        console.log(`🔴☁️ Error 1 while deleting files ${error}`);
         return null;
       });
   } catch (error) {
-    console.log(`🔴☁️ Error while deleting files ${error}`);
+    console.log(`🔴☁️ Error 2 while deleting files ${error}`);
     return null;
   }
 };

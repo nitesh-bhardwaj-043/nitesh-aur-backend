@@ -94,16 +94,13 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
 const publishAVideo = asyncHandler(async (req, res) => {
   const { title, description } = req.body;
-  const { userId } = req.user?._id;
+  // const { userId } = req.user?._id;
 
   if (!(title && description)) {
     throw new ApiError(
       400,
       "Please provide a valid video title and description"
     );
-  }
-  if (!userId) {
-    throw new ApiError(400, "User not authenticated");
   }
 
   const videoLocalPath = req.files?.videoFile[0]?.path;
@@ -117,14 +114,14 @@ const publishAVideo = asyncHandler(async (req, res) => {
   }
 
   const videoFile = await uploadOnCloudinary(videoLocalPath);
-  const thumbnail = await uploadOnCloudinary(videoLocalPath);
+  const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
 
   const uploadVideo = await Video.create({
     title,
     description,
     videoFile: videoFile.url,
     thumbnail: thumbnail.url,
-    owner: userId,
+    owner: req.user?._id,
     duration: videoFile.duration,
   });
 
@@ -137,7 +134,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, uploadVideo, "Video is uploaded successfully"));
+    .json(new ApiResponse(200, uploadVideo, "Video uploaded successfully"));
 });
 
 const getVideoById = asyncHandler(async (req, res) => {
@@ -264,7 +261,7 @@ const getVideoById = asyncHandler(async (req, res) => {
 
 const updateVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  if (videoId) {
+  if (!videoId) {
     throw new ApiError(400, "Video Id not provided");
   }
   if (!isValidObjectId(videoId)) {
@@ -281,7 +278,9 @@ const updateVideo = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Thumbnail is not missing");
   }
 
-  const oldThumbnail = videoId.thumbnail;
+  const oldVideo = await Video.findById(videoId);
+
+  const oldThumbnail = oldVideo.thumbnail;
   const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
 
   if (!thumbnail.url) {
@@ -322,18 +321,18 @@ const deleteVideo = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid Video Id");
   }
 
-  const video = await Video.findByIdAndDelete(videoId);
+  const video = await Video.findById(videoId);
   if (!video) {
     throw new ApiError(400, "No video with given id exists.");
   }
-
-  await deleteImageFromCloudinary(video.videoFile);
-  await deleteImageFromCloudinary(video.thumbnail);
 
   const deletedVideo = await Video.findByIdAndDelete(video);
   if (!deletedVideo) {
     throw new ApiError(500, "Error in  deleting the video");
   }
+
+  await deleteImageFromCloudinary(video.videoFile);
+  await deleteImageFromCloudinary(video.thumbnail);
 
   return res
     .status(200)
