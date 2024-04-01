@@ -15,7 +15,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
   const getComments = await Comment.aggregate([
     {
       $match: {
-        video: mongoose.Types.ObjectId(videoId),
+        video: new mongoose.Types.ObjectId(videoId),
       },
     },
     {
@@ -40,9 +40,9 @@ const getVideoComments = asyncHandler(async (req, res) => {
           $size: "$likes",
         },
         owner: {
-          $arrayEleAt: ["$owner", 0],
+          // $arrayEleAt: ["$owners", 0],
           //   alternative
-          //   $first:"$owner",
+            $first:"$owners",
         },
         isLiked: {
           $cond: {
@@ -155,6 +155,10 @@ const deleteComment = asyncHandler(async (req, res) => {
 
   const getComment = await Comment.findById(commentId);
 
+  if(!getComment){
+    throw new ApiError(400,"Comment does not exist")
+  }
+
   if (getComment?.owner.toString() !== req.user?._id.toString()) {
     throw new ApiError(400, "User is not the owner of this comment");
   }
@@ -167,7 +171,7 @@ const deleteComment = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(200, deletedComment, "Comment deleted Successfully");
+    .json(new ApiResponse(200, deletedComment, "Comment deleted Successfully"));
 });
 
 export { getVideoComments, addComment, updateComment, deleteComment };
