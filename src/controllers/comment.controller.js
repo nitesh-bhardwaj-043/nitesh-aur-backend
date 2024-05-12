@@ -42,7 +42,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
         owner: {
           // $arrayEleAt: ["$owners", 0],
           //   alternative
-            $first:"$owners",
+          $first: "$owners",
         },
         isLiked: {
           $cond: {
@@ -53,6 +53,24 @@ const getVideoComments = asyncHandler(async (req, res) => {
             else: false,
           },
         },
+      },
+    },
+    {
+      $sort: {
+        createdAt: -1,
+      },
+    },
+    {
+      $project: {
+        content: 1,
+        createdAt: 1,
+        likesCount: 1,
+        owner: {
+          username: 1,
+          fullName: 1,
+          "avatar.url": 1,
+        },
+        isLiked: 1,
       },
     },
   ]);
@@ -74,7 +92,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, comments, "Comments fetched successfully"));
+    .json(new ApiResponse(200, comments, "Comments fetched successfully!"));
 });
 
 const addComment = asyncHandler(async (req, res) => {
@@ -155,8 +173,8 @@ const deleteComment = asyncHandler(async (req, res) => {
 
   const getComment = await Comment.findById(commentId);
 
-  if(!getComment){
-    throw new ApiError(400,"Comment does not exist")
+  if (!getComment) {
+    throw new ApiError(400, "Comment does not exist");
   }
 
   if (getComment?.owner.toString() !== req.user?._id.toString()) {
